@@ -39,6 +39,8 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.IOException;
+
 /**
  * The Foreground Service that keeps alive the app in background when recording.
  * It shows a notification that shows the status of the recording, the traveled distance
@@ -53,6 +55,8 @@ public class GPSService extends Service {
     private NotificationManager mNotificationManager;
     private boolean recordingState;
     private PowerManager.WakeLock wakeLock;                 // PARTIAL_WAKELOCK
+
+    private TrackHttpServer trackServer;
 
     /**
      * Returns the instance of the service
@@ -70,6 +74,14 @@ public class GPSService extends Service {
         // PARTIAL_WAKELOCK
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"GPSLogger:wakelock");
+
+        try {
+            trackServer = new TrackHttpServer(8888);
+        } catch (IOException e) {
+            Log.w("myApp", "[#] GPSService.java - onCreate failed to start trackServer: " + e.getMessage());
+        }
+
+
         Log.w("myApp", "[#] GPSService.java - CREATE = onCreate");
         // Workaround for Nokia Devices, Android 9
         // https://github.com/BasicAirData/GPSLogger/issues/77
@@ -110,6 +122,11 @@ public class GPSService extends Service {
         Log.w("myApp", "[#] GPSService.java - DESTROY = onDestroy");
         // THREAD FOR DEBUG PURPOSE
         //if (t.isAlive()) t.interrupt();
+
+        if (trackServer != null) {
+            trackServer.stop();
+        }
+
         super.onDestroy();
     }
 
