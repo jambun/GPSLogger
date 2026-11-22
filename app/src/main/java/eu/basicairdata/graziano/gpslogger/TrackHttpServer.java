@@ -46,11 +46,20 @@ public class TrackHttpServer extends NanoHTTPD {
                 List<Map> outList = new ArrayList<>();
 
                 for (LocationExtended loc : lList) {
-                    Map<String, Number> locMap = new HashMap<>();
-                    locMap.put("lat", loc.getLatitude());
-                    locMap.put("lon", loc.getLongitude());
-                    locMap.put("ele", loc.getAltitude());
-                    locMap.put("time", loc.getTime());
+                    Map<String, Object> locMap = new HashMap<>();
+                    Map<String, Object> coords = new HashMap<>();
+
+                    coords.put("latitude", loc.getLatitude());
+                    coords.put("longitude", loc.getLongitude());
+                    coords.put("altitude", loc.getAltitude());
+                    coords.put("accuracy", loc.getAccuracy());
+                    coords.put("altitudeAccuracy", loc.getAccuracy());
+                    coords.put("speed", loc.getSpeed());
+                    coords.put("heading", loc.getBearing());
+
+                    locMap.put("coords", coords);
+                    locMap.put("timestamp", loc.getTime());
+
                     outList.add(locMap);
                 }
 
