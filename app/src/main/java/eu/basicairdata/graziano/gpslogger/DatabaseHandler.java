@@ -663,6 +663,66 @@ class DatabaseHandler extends SQLiteOpenHelper {
     }
 
     /**
+     * Returns a list of Locations associated to a specified Track,
+     * with stamptime in milliseconds later than since.
+     *
+     * @param trackID the ID of the Track
+     * @param since the timestamp locations need to be newer than to be included
+     *
+     * @return the list of Locations
+     */
+    public List<LocationExtended> getLocationsSince(long trackID, long since) {
+        List<LocationExtended> locationList = new ArrayList<>();
+
+        String selectQuery = "SELECT  * FROM " + TABLE_LOCATIONS + " WHERE "
+                + KEY_TRACK_ID + " = " + trackID + " AND "
+                + KEY_LOCATION_TIME + " > " + since
+                + " ORDER BY " + KEY_LOCATION_TIME;
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+        double lcdata_double;
+        float lcdata_float;
+
+        if (cursor != null) {
+            // looping through all rows and adding to list
+            if (cursor.moveToFirst()) {
+                do {
+                    Location lc = new Location("DB");
+                    lc.setLatitude(cursor.getDouble(3));
+                    lc.setLongitude(cursor.getDouble(4));
+
+                    lcdata_double = cursor.getDouble(5);
+                    if (lcdata_double != NOT_AVAILABLE) lc.setAltitude(lcdata_double);
+                    //else lc.removeAltitude();
+
+                    lcdata_float = cursor.getFloat(6);
+                    if (lcdata_float != NOT_AVAILABLE) lc.setSpeed(lcdata_float);
+                    //else lc.removeSpeed();
+
+                    lcdata_float = cursor.getFloat(7);
+                    if (lcdata_float != NOT_AVAILABLE) lc.setAccuracy(lcdata_float);
+                    //else lc.removeAccuracy();
+
+                    lcdata_float = cursor.getFloat(8);
+                    if (lcdata_float != NOT_AVAILABLE) lc.setBearing(lcdata_float);
+                    //else lc.removeBearing();
+
+                    lc.setTime(cursor.getLong(9));
+
+                    LocationExtended extdloc = new LocationExtended(lc);
+                    extdloc.setNumberOfSatellites(cursor.getInt(10));
+                    extdloc.setNumberOfSatellitesUsedInFix(cursor.getInt(12));
+
+                    locationList.add(extdloc); // Add Location to list
+                } while (cursor.moveToNext());
+            }
+            cursor.close();
+        }
+        return locationList;
+    }
+
+    /**
      * Returns a list of Annotations (Placemarks) associated to a specified Track,
      * with Placemark ID from startNumber to endNumber.
      * Both limits are included.
